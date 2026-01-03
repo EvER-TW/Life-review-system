@@ -467,9 +467,11 @@ async function initWeeklyReview() {
     updateMonthDisplay();
     await renderWeeklyReviewTables();
 
-    document.getElementById('prev-month')?.addEventListener('click', () => changeMonth(-1));
-    document.getElementById('next-month')?.addEventListener('click', () => changeMonth(1));
-    document.getElementById('add-task')?.addEventListener('click', addWeeklyTask);
+    // 使用 onclick 避免重複綁定
+    const prevBtn = document.getElementById('prev-month');
+    const nextBtn = document.getElementById('next-month');
+    if (prevBtn) prevBtn.onclick = () => changeMonth(-1);
+    if (nextBtn) nextBtn.onclick = () => changeMonth(1);
 }
 
 function changeMonth(delta) {
@@ -578,8 +580,11 @@ async function initMonthlySummary() {
     updateMonthDisplay();
     await renderMonthlySummary();
 
-    document.getElementById('prev-month')?.addEventListener('click', () => { changeMonth(-1); });
-    document.getElementById('next-month')?.addEventListener('click', () => { changeMonth(1); });
+    // 使用 onclick 避免重複綁定
+    const prevBtn = document.getElementById('prev-month');
+    const nextBtn = document.getElementById('next-month');
+    if (prevBtn) prevBtn.onclick = () => changeMonth(-1);
+    if (nextBtn) nextBtn.onclick = () => changeMonth(1);
 }
 
 async function renderMonthlySummary() {
