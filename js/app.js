@@ -452,6 +452,14 @@ function calculateLife(birthDate) {
     document.getElementById('age-years').textContent = years;
     document.getElementById('age-days').textContent = days.toLocaleString();
     document.getElementById('age-weeks').textContent = weeks;
+
+    // 更新人生進度條（假設平均壽命 80 歲）
+    const ageInYears = (today - birth) / (365.25 * 24 * 60 * 60 * 1000);
+    const percent = Math.min(100, (ageInYears / 80 * 100)).toFixed(1);
+    const progressBar = document.getElementById('life-progress');
+    const percentDisplay = document.getElementById('life-percent');
+    if (progressBar) progressBar.style.width = percent + '%';
+    if (percentDisplay) percentDisplay.textContent = percent;
 }
 
 // ===== 週復盤表 =====
