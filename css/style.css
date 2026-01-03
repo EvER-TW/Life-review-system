@@ -651,8 +651,15 @@ a:hover {
 
 .week-display {
   font-weight: 600;
-  min-width: 150px;
+  min-width: 200px;
   text-align: center;
+}
+
+/* Date Picker in Week Selector */
+.date-picker {
+  width: 140px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.85rem;
 }
 
 /* Mobile Menu Toggle */

@@ -183,15 +183,61 @@ function generateEmptyEventsData() {
 }
 
 function changeWeek(days) {
-    state.currentWeek.setDate(state.currentWeek.getDate() + days);
-    initReservoirEvents();
+    // 建立新的 Date 物件，避免 mutation 問題
+    const newDate = new Date(state.currentWeek.getTime());
+    newDate.setDate(newDate.getDate() + days);
+    state.currentWeek = newDate;
+
+    // 根據當前頁面重新初始化
+    if (state.currentPage === 'reservoir-events') {
+        initReservoirEvents();
+    } else if (state.currentPage === 'productivity-heatmap') {
+        initProductivityHeatmap();
+    }
 }
+
+// 跳轉到指定日期
+function jumpToDate(dateString) {
+    if (!dateString) return;
+    state.currentWeek = new Date(dateString);
+
+    if (state.currentPage === 'reservoir-events') {
+        initReservoirEvents();
+    } else if (state.currentPage === 'productivity-heatmap') {
+        initProductivityHeatmap();
+    }
+}
+
+// 暴露到全域
+window.jumpToDate = jumpToDate;
 
 function updateWeekDisplay() {
     const start = WeekUtils.getWeekStart(state.currentWeek);
     const end = WeekUtils.getWeekEnd(state.currentWeek);
     const display = document.getElementById('week-display');
-    if (display) display.textContent = `${WeekUtils.formatShort(start)} - ${WeekUtils.formatShort(end)}`;
+
+    // 格式化：如果跨年顯示完整年份，否則只在開頭顯示年份
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
+
+    let displayText;
+    if (startYear === endYear) {
+        displayText = `${startYear}/${start.getMonth() + 1}/${start.getDate()} - ${end.getMonth() + 1}/${end.getDate()}`;
+    } else {
+        displayText = `${startYear}/${start.getMonth() + 1}/${start.getDate()} - ${endYear}/${end.getMonth() + 1}/${end.getDate()}`;
+    }
+
+    if (display) display.textContent = displayText;
+
+    // 更新日期選擇器（如果存在）
+    const datePicker = document.getElementById('week-date-picker');
+    if (datePicker) {
+        // 設定為週的第一天
+        const yyyy = start.getFullYear();
+        const mm = String(start.getMonth() + 1).padStart(2, '0');
+        const dd = String(start.getDate()).padStart(2, '0');
+        datePicker.value = `${yyyy}-${mm}-${dd}`;
+    }
 }
 
 function renderEventsTable(data) {
