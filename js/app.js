@@ -509,7 +509,7 @@ async function renderWeeklyReviewTables() {
             <thead>
               <tr>
                 <th>類別</th><th>週項目</th><th>目標</th><th>實際</th><th>完成%</th>
-                <th>週一</th><th>週二</th><th>週三</th><th>週四</th><th>週五</th><th>週六</th><th>週日</th>
+                <th>週日</th><th>週一</th><th>週二</th><th>週三</th><th>週四</th><th>週五</th><th>週六</th>
                 <th>總投入</th><th>操作</th>
               </tr>
             </thead>
@@ -524,7 +524,7 @@ async function renderWeeklyReviewTables() {
 
 function renderWeeklyTaskRows(weekKey, tasks) {
     return tasks.map((task, i) => {
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         const actual = days.filter(day => task[day]).length;
         const percent = task.target ? Math.round((actual / task.target) * 100) : 0;
         const percentClass = percent >= 100 ? 'text-success' : percent >= 60 ? 'text-warning' : 'text-danger';

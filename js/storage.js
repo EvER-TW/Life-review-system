@@ -66,19 +66,21 @@ const Storage = {
 
 // 週次相關工具 (保持不變)
 const WeekUtils = {
+  // 週日為一週的開始
   getWeekStart(date = new Date()) {
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const day = d.getDay(); // 0=週日, 1=週一, ..., 6=週六
+    const diff = d.getDate() - day; // 回到週日
     d.setDate(diff);
     d.setHours(0, 0, 0, 0);
     return d;
   },
 
+  // 週六為一週的結束
   getWeekEnd(date = new Date()) {
     const start = this.getWeekStart(date);
     const end = new Date(start);
-    end.setDate(end.getDate() + 6);
+    end.setDate(end.getDate() + 6); // 週日+6天=週六
     end.setHours(23, 59, 59, 999);
     return end;
   },

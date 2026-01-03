@@ -76,9 +76,8 @@ function renderPickerGrid() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 計算需要從上個月開始的天數（週一開始）
-    let startDayOfWeek = firstDay.getDay();
-    startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // 轉換為週一=0
+    // 計算需要從上個月開始的天數（週日開始）
+    let startDayOfWeek = firstDay.getDay(); // 0=週日, 1=週一, ...
 
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - startDayOfWeek);
@@ -140,10 +139,9 @@ function selectWeek(weekStart) {
 // 選擇今天所在的週
 function selectToday() {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const dayOfWeek = today.getDay(); // 0=週日
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() + diff);
+    weekStart.setDate(today.getDate() - dayOfWeek); // 回到週日
     weekStart.setHours(0, 0, 0, 0);
 
     selectWeek(weekStart);
@@ -151,10 +149,9 @@ function selectToday() {
 
 // 設定當前選中的週（供外部呼叫更新狀態）
 function setSelectedWeek(date) {
-    const dayOfWeek = date.getDay();
-    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const dayOfWeek = date.getDay(); // 0=週日
     currentSelectedWeekStart = new Date(date);
-    currentSelectedWeekStart.setDate(date.getDate() + diff);
+    currentSelectedWeekStart.setDate(date.getDate() - dayOfWeek); // 回到週日
     currentSelectedWeekStart.setHours(0, 0, 0, 0);
 
     pickerYear = currentSelectedWeekStart.getFullYear();
