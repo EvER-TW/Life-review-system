@@ -121,8 +121,11 @@ async function initReservoirEvents() {
     updateWeekDisplay();
     renderEventsTable(data);
 
-    document.getElementById('prev-week')?.addEventListener('click', () => changeWeek(-7));
-    document.getElementById('next-week')?.addEventListener('click', () => changeWeek(7));
+    // 使用 onclick 替代 addEventListener 避免重複綁定
+    const prevBtn = document.getElementById('prev-week');
+    const nextBtn = document.getElementById('next-week');
+    if (prevBtn) prevBtn.onclick = () => changeWeek(-7);
+    if (nextBtn) nextBtn.onclick = () => changeWeek(7);
 }
 
 function renderEventSelect(day, hour, field, value) {
@@ -266,8 +269,11 @@ async function initProductivityHeatmap() {
     renderHeatmapTable(data);
     renderRadarChart(data);
 
-    document.getElementById('prev-week')?.addEventListener('click', () => { changeWeek(-7); });
-    document.getElementById('next-week')?.addEventListener('click', () => { changeWeek(7); });
+    // 使用 onclick 替代 addEventListener 避免重複綁定
+    const prevBtn = document.getElementById('prev-week');
+    const nextBtn = document.getElementById('next-week');
+    if (prevBtn) prevBtn.onclick = () => { changeWeek(-7); };
+    if (nextBtn) nextBtn.onclick = () => { changeWeek(7); };
 }
 
 function generateEmptyHeatmapData() {
