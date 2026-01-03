@@ -1,0 +1,53 @@
+<!-- 活多久計算機 -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-value" id="age-years">--</div>
+        <div class="stat-label">你目前活了幾歲</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="age-days">--</div>
+        <div class="stat-label">你目前活了幾天</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="age-weeks">--</div>
+        <div class="stat-label">你目前活了幾週</div>
+    </div>
+</div>
+
+<div class="card mt-md">
+    <div class="grid-2">
+        <div class="form-group">
+            <label class="form-label">今天是哪天</label>
+            <input type="text" class="form-input" id="today-date" readonly>
+        </div>
+        <div class="form-group">
+            <label class="form-label">出生年/月/日</label>
+            <input type="date" class="form-input" id="birth-date">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="card-title mb-md">人生進度條</h3>
+    <p class="text-muted mb-md">假設平均壽命 80 歲</p>
+    <div class="progress-bar" style="height: 24px;">
+        <div class="progress-fill" id="life-progress" style="width: 0%;"></div>
+    </div>
+    <p class="text-center mt-md"><span id="life-percent">--</span>% 的人生已過</p>
+</div>
+
+<div class="card">
+    <p class="text-muted text-center">💡 時間是最寶貴的資源，好好珍惜每一天。</p>
+</div>
+
+<script>
+    // 更新人生進度條
+    document.getElementById('birth-date')?.addEventListener('change', function () {
+        const birthDate = new Date(this.value);
+        const today = new Date();
+        const ageInYears = (today - birthDate) / (365.25 * 24 * 60 * 60 * 1000);
+        const percent = Math.min(100, (ageInYears / 80 * 100)).toFixed(1);
+        document.getElementById('life-progress').style.width = percent + '%';
+        document.getElementById('life-percent').textContent = percent;
+    });
+</script>

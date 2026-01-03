@@ -1,0 +1,65 @@
+<!-- 週生產力熱力圖 -->
+<div class="card">
+    <div class="card-header">
+        <div class="week-selector">
+            <button class="btn btn-secondary week-nav-btn" id="prev-week">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+            <span class="week-display" id="week-display">載入中...</span>
+            <button class="btn btn-secondary week-nav-btn" id="next-week">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6" />
+                </svg>
+            </button>
+        </div>
+    </div>
+    <p class="text-muted mb-md">填入數字 1-5 表示生產力高低（5=最高，1=最低），顏色會自動更新。</p>
+</div>
+
+<div class="grid-2">
+    <!-- 熱力圖表格 -->
+    <div class="card">
+        <h3 class="card-title mb-md">生產力熱力圖</h3>
+        <div class="editable-table">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>時段</th>
+                        <th>週一</th>
+                        <th>週二</th>
+                        <th>週三</th>
+                        <th>週四</th>
+                        <th>週五</th>
+                        <th>週六</th>
+                        <th>週日</th>
+                        <th>平均</th>
+                    </tr>
+                </thead>
+                <tbody id="heatmap-tbody">
+                    <!-- Dynamic content -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 雷達圖 -->
+    <div class="card">
+        <h3 class="card-title mb-md">時段生產力分布</h3>
+        <div class="chart-container">
+            <canvas id="radar-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 class="card-title mb-md">顏色說明</h3>
+    <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+        <span class="heat-cell" data-value="1" style="padding: 8px 16px; border-radius: 4px;">1 - 很低</span>
+        <span class="heat-cell" data-value="2" style="padding: 8px 16px; border-radius: 4px;">2 - 偏低</span>
+        <span class="heat-cell" data-value="3" style="padding: 8px 16px; border-radius: 4px;">3 - 普通</span>
+        <span class="heat-cell" data-value="4" style="padding: 8px 16px; border-radius: 4px;">4 - 良好</span>
+        <span class="heat-cell" data-value="5" style="padding: 8px 16px; border-radius: 4px;">5 - 極佳</span>
+    </div>
+</div>
