@@ -549,7 +549,18 @@ function renderWeeklyTaskRows(weekKey, tasks) {
 
 window.addWeeklyTaskToWeek = async function (weekKey) {
     const data = await Storage.load(`weekly_${weekKey}`, { tasks: [] });
-    data.tasks.push({ category: '工作', name: '', target: 1 });
+    data.tasks.push({
+        category: '工作',
+        name: '',
+        target: 1,
+        mon: false,
+        tue: false,
+        wed: false,
+        thu: false,
+        fri: false,
+        sat: false,
+        sun: false
+    });
     await Storage.save(`weekly_${weekKey}`, data);
     await renderWeeklyReviewTables();
 };
