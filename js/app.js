@@ -29,14 +29,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 先檢查登入狀態，登入後才初始化應用
     if (checkLoginStatus()) {
         initApp();
+    } else {
+        // 如果未登入，監聽登入成功事件
+        window.addEventListener('userLoggedIn', initApp, { once: true });
     }
-
-    // 監聽登入成功事件（從 auth.js showApp 時觸發）
-    window.addEventListener('userLoggedIn', initApp);
 });
 
 // 初始化應用
+let appInitialized = false;
 function initApp() {
+    if (appInitialized) return;
+    appInitialized = true;
+
     initNavigation();
     initMobileMenu();
     navigateTo(state.currentPage);
