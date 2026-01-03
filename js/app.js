@@ -524,26 +524,30 @@ async function renderWeeklyReviewTables() {
 
 function renderWeeklyTaskRows(weekKey, tasks) {
     return tasks.map((task, i) => {
-        const actual = [task.mon, task.tue, task.wed, task.thu, task.fri, task.sat, task.sun].filter(v => v).length;
+        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+        const actual = days.filter(day => task[day]).length;
         const percent = task.target ? Math.round((actual / task.target) * 100) : 0;
-        return `
-      <tr>
-        <td><select data-week="${weekKey}" data-index="${i}" data-field="category" onchange="saveWeeklyTask(this)">
-          <option value="工作" ${task.category === '工作' ? 'selected' : ''}>工作</option>
-          <option value="生活" ${task.category === '生活' ? 'selected' : ''}>生活</option>
-          <option value="家庭" ${task.category === '家庭' ? 'selected' : ''}>家庭</option>
-        </select></td>
-        <td><input type="text" value="${task.name || ''}" data-week="${weekKey}" data-index="${i}" data-field="name" onchange="saveWeeklyTask(this)"></td>
-        <td><input type="number" min="0" value="${task.target || ''}" data-week="${weekKey}" data-index="${i}" data-field="target" onchange="saveWeeklyTask(this)"></td>
-        <td class="text-center">${actual}</td>
-        <td class="text-center ${percent >= 100 ? 'text-success' : percent >= 60 ? 'text-warning' : 'text-danger'}">${percent}%</td>
-        ${['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(day => `
-          <td class="checkbox-wrapper"><input type="checkbox" ${task[day] ? 'checked' : ''} data-week="${weekKey}" data-index="${i}" data-field="${day}" onchange="saveWeeklyTask(this)"></td>
-        `).join('')}
-        <td class="text-center">${actual}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteWeeklyTask('${weekKey}', ${i})">×</button></td>
-      </tr>
-    `;
+        const percentClass = percent >= 100 ? 'text-success' : percent >= 60 ? 'text-warning' : 'text-danger';
+
+        // 生成每天的 checkbox
+        const checkboxCells = days.map(day =>
+            `<td class="checkbox-wrapper"><input type="checkbox" ${task[day] ? 'checked' : ''} data-week="${weekKey}" data-index="${i}" data-field="${day}" onchange="saveWeeklyTask(this)"></td>`
+        ).join('');
+
+        return `<tr>
+            <td><select data-week="${weekKey}" data-index="${i}" data-field="category" onchange="saveWeeklyTask(this)">
+                <option value="工作" ${task.category === '工作' ? 'selected' : ''}>工作</option>
+                <option value="生活" ${task.category === '生活' ? 'selected' : ''}>生活</option>
+                <option value="家庭" ${task.category === '家庭' ? 'selected' : ''}>家庭</option>
+            </select></td>
+            <td><input type="text" value="${task.name || ''}" data-week="${weekKey}" data-index="${i}" data-field="name" onchange="saveWeeklyTask(this)"></td>
+            <td><input type="number" min="0" value="${task.target || ''}" data-week="${weekKey}" data-index="${i}" data-field="target" onchange="saveWeeklyTask(this)"></td>
+            <td class="text-center">${actual}</td>
+            <td class="text-center ${percentClass}">${percent}%</td>
+            ${checkboxCells}
+            <td class="text-center">${actual}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteWeeklyTask('${weekKey}', ${i})">×</button></td>
+        </tr>`;
     }).join('');
 }
 
