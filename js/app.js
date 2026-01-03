@@ -4,6 +4,7 @@
 import { Storage, WeekUtils, DateUtils } from './storage.js';
 import { createRadarChart, createBarChart, updateHeatmapCell, calculateHeatmapAverages } from './charts.js';
 import { checkLoginStatus } from './auth.js';
+import { initWeekPicker, setSelectedWeek } from './week-picker.js';
 
 // 當前狀態
 const state = {
@@ -121,11 +122,9 @@ async function initReservoirEvents() {
     updateWeekDisplay();
     renderEventsTable(data);
 
-    // 使用 onclick 替代 addEventListener 避免重複綁定
-    const prevBtn = document.getElementById('prev-week');
-    const nextBtn = document.getElementById('next-week');
-    if (prevBtn) prevBtn.onclick = () => changeWeek(-7);
-    if (nextBtn) nextBtn.onclick = () => changeWeek(7);
+    // 初始化週選擇器
+    initWeekPicker();
+    setSelectedWeek(state.currentWeek);
 }
 
 function renderEventSelect(day, hour, field, value) {
@@ -196,10 +195,9 @@ function changeWeek(days) {
     }
 }
 
-// 跳轉到指定日期
-function jumpToDate(dateString) {
-    if (!dateString) return;
-    state.currentWeek = new Date(dateString);
+// 設定當前週（供週選擇器呼叫）
+function setCurrentWeek(weekStart) {
+    state.currentWeek = new Date(weekStart);
 
     if (state.currentPage === 'reservoir-events') {
         initReservoirEvents();
@@ -209,7 +207,7 @@ function jumpToDate(dateString) {
 }
 
 // 暴露到全域
-window.jumpToDate = jumpToDate;
+window.setCurrentWeek = setCurrentWeek;
 
 function updateWeekDisplay() {
     const start = WeekUtils.getWeekStart(state.currentWeek);
@@ -315,11 +313,9 @@ async function initProductivityHeatmap() {
     renderHeatmapTable(data);
     renderRadarChart(data);
 
-    // 使用 onclick 替代 addEventListener 避免重複綁定
-    const prevBtn = document.getElementById('prev-week');
-    const nextBtn = document.getElementById('next-week');
-    if (prevBtn) prevBtn.onclick = () => { changeWeek(-7); };
-    if (nextBtn) nextBtn.onclick = () => { changeWeek(7); };
+    // 初始化週選擇器
+    initWeekPicker();
+    setSelectedWeek(state.currentWeek);
 }
 
 function generateEmptyHeatmapData() {
