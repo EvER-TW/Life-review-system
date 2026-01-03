@@ -3,6 +3,7 @@
  */
 import { Storage, WeekUtils, DateUtils } from './storage.js';
 import { createRadarChart, createBarChart, updateHeatmapCell, calculateHeatmapAverages } from './charts.js';
+import { checkLoginStatus } from './auth.js';
 
 // 當前狀態
 const state = {
@@ -25,10 +26,21 @@ const pages = {
 
 // DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+    // 先檢查登入狀態，登入後才初始化應用
+    if (checkLoginStatus()) {
+        initApp();
+    }
+
+    // 監聽登入成功事件（從 auth.js showApp 時觸發）
+    window.addEventListener('userLoggedIn', initApp);
+});
+
+// 初始化應用
+function initApp() {
     initNavigation();
     initMobileMenu();
     navigateTo(state.currentPage);
-});
+}
 
 // 導航初始化
 function initNavigation() {
