@@ -37,12 +37,17 @@ async function getSheetsClient() {
 }
 
 async function ensureSheet(sheets, spreadsheetId, sheetName) {
+    console.log(`[Google Sheets] Ensuring sheet exists: ${sheetName}`);
+
     try {
         await sheets.spreadsheets.values.get({
             spreadsheetId,
             range: `${sheetName}!A1`,
         });
+        console.log(`[Google Sheets] Sheet ${sheetName} already exists`);
     } catch (e) {
+        console.log(`[Google Sheets] Sheet ${sheetName} not found, creating...`);
+
         // 建立新工作表
         try {
             await sheets.spreadsheets.batchUpdate({
@@ -51,19 +56,29 @@ async function ensureSheet(sheets, spreadsheetId, sheetName) {
                     requests: [{ addSheet: { properties: { title: sheetName } } }]
                 }
             });
+            console.log(`[Google Sheets] Successfully created sheet: ${sheetName}`);
         } catch (createError) {
             // 工作表可能已存在，忽略錯誤
-            if (!createError.message.includes('already exists')) {
-                console.error('Error creating sheet:', createError.message);
+            if (createError.message && createError.message.includes('already exists')) {
+                console.log(`[Google Sheets] Sheet ${sheetName} already exists (race condition)`);
+            } else {
+                console.error(`[Google Sheets] Error creating sheet ${sheetName}:`, createError.message);
+                throw createError; // 拋出錯誤讓上層知道
             }
         }
+
         // 新增標題列
-        await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range: `${sheetName}!A1`,
-            valueInputOption: 'RAW',
-            resource: { values: [['Key', 'Value', 'UpdatedAt']] }
-        });
+        try {
+            await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: `${sheetName}!A1`,
+                valueInputOption: 'RAW',
+                resource: { values: [['Key', 'Value', 'UpdatedAt']] }
+            });
+            console.log(`[Google Sheets] Added headers to sheet: ${sheetName}`);
+        } catch (headerError) {
+            console.error(`[Google Sheets] Error adding headers to ${sheetName}:`, headerError.message);
+        }
     }
 }
 
