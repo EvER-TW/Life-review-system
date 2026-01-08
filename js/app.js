@@ -20,9 +20,12 @@ const pages = {
     'reservoir-events': { title: '水庫評量表 - 事件', init: initReservoirEvents },
     'productivity-heatmap': { title: '週生產力熱力圖', init: initProductivityHeatmap },
     'reservoir-status': { title: '水庫現況表', init: initReservoirStatus },
-    'life-calculator': { title: '活多久計算機', init: initLifeCalculator },
+    'life-calculator': { title: '人生 100', init: initLifeCalculator },
     'weekly-review': { title: '週復盤表', init: initWeeklyReview },
-    'monthly-summary': { title: '月總覆盤表', init: initMonthlySummary }
+    'monthly-summary': { title: '月總覆盤表', init: initMonthlySummary },
+    'reservoir-rating': { title: '水庫評量表 - 長期', init: initReservoirRating },
+    'learning-plan': { title: '學習計畫', init: initLearningPlan },
+    'fnga-osm': { title: 'FNGA-OSM 目標規劃', init: initFNGAOSM }
 };
 
 // DOM Ready
@@ -102,13 +105,31 @@ function navigateTo(pageId) {
 async function loadPageContent(pageId) {
     const container = document.getElementById('page-content');
     try {
-        const response = await fetch(`pages/${pageId}.html`);
-        container.innerHTML = await response.text();
+        // Add timestamp to prevent caching
+        const response = await fetch(`pages/${pageId}.html?t=${Date.now()}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // Prevent recursive loading (if server returns index.html instead of partial)
+        if (html.includes('<!DOCTYPE html>') || html.includes('<html')) {
+            throw new Error('Server returned full page instead of fragment. Please restart server.');
+        }
+
+        container.innerHTML = html;
         if (pages[pageId].init) {
             await pages[pageId].init();
         }
     } catch (e) {
-        container.innerHTML = `<div class="card"><p>載入失敗: ${e.message}</p></div>`;
+        console.error('Page load error:', e);
+        container.innerHTML = `<div class="card">
+            <h3 class="text-danger">載入失敗</h3>
+            <p>${e.message}</p>
+            <p class="text-muted">請確認伺服器正在執行，且 pages 資料夾中有對應的 .html 檔案。</p>
+        </div>`;
     }
 }
 
@@ -426,9 +447,11 @@ async function initLifeCalculator() {
     const saved = await Storage.load('life_calculator', { birthDate: '' });
     const birthInput = document.getElementById('birth-date');
 
+    // Render on init if birth date exists
     if (birthInput && saved.birthDate) {
         birthInput.value = saved.birthDate;
         calculateLife(saved.birthDate);
+        renderLife100Grid(saved.birthDate);
     }
 
     const todayInput = document.getElementById('today-date');
@@ -437,8 +460,241 @@ async function initLifeCalculator() {
     birthInput?.addEventListener('change', async (e) => {
         await Storage.save('life_calculator', { birthDate: e.target.value });
         calculateLife(e.target.value);
+        renderLife100Grid(e.target.value);
     });
 }
+
+// ... Life calculation helpers same as before ...
+
+// MULTI-SELECT STATE
+window.selectedCells = new Set(); // Stores "age-month" strings
+
+async function renderLife100Grid(birthDateStr) {
+    const container = document.getElementById('life-100-grid');
+    if (!container) return;
+
+    const birthDate = new Date(birthDateStr);
+    const birthYear = birthDate.getFullYear();
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    const lifeData = await Storage.load('life_100_data', {});
+    let html = '';
+
+    // Loop 100 down to 0
+    for (let age = 100; age >= 0; age--) {
+        const year = birthYear + age;
+
+        let monthsHtml = '';
+        const yearData = lifeData[age] || {};
+        const monthsData = yearData.months || {};
+
+        for (let m = 1; m <= 12; m++) {
+            const mData = monthsData[m] || { mood: 'default', event: '' };
+            const isCurrent = (year === currentYear && m === currentMonth);
+
+            let moodClass = '';
+            if (mData.mood === 'normal') moodClass = 'mood-normal';
+            if (mData.mood === 'positive') moodClass = 'mood-positive';
+            if (mData.mood === 'negative') moodClass = 'mood-negative';
+
+            const currentClass = isCurrent ? 'is-current' : '';
+            // Show event text if exists (truncated)
+            const eventText = mData.event ? `<span class="cell-event">${mData.event.substring(0, 8)}${mData.event.length > 8 ? '...' : ''}</span>` : '';
+
+            monthsHtml += `
+            <div class="life-month-item ${moodClass} ${currentClass}" 
+                 id="month-cell-${age}-${m}"
+                 data-age="${age}"
+                 data-month="${m}"
+                 data-year="${year}">
+                <span class="cell-month">${m}月</span>
+                ${eventText}
+            </div>`;
+        }
+
+        html += `
+        <div class="life-year-row">
+            <div class="life-year-header">
+                <span class="life-year-label">${age} 歲</span>
+                <span class="life-year-sub">${year}</span>
+            </div>
+            <div class="life-months-container">
+                ${monthsHtml}
+            </div>
+        </div>`;
+    }
+
+    container.innerHTML = html;
+
+    // === EVENT LISTENERS ===
+    let isDragging = false;
+    let dragStartCell = null;
+
+    // Double-click: Open editor for single cell directly
+    container.addEventListener('dblclick', (e) => {
+        const cell = e.target.closest('.life-month-item');
+        if (cell) {
+            const age = parseInt(cell.dataset.age);
+            const month = parseInt(cell.dataset.month);
+            const year = parseInt(cell.dataset.year);
+            // Clear previous selection and select only this one
+            clearSelection();
+            window.selectedCells.add(`${age}-${month}`);
+            cell.classList.add('ui-selected');
+            updateSelectionBar();
+            openBatchEditor(); // Open editor immediately
+        }
+    });
+
+    // Mouse down: Start drag or single click
+    container.addEventListener('mousedown', (e) => {
+        const cell = e.target.closest('.life-month-item');
+        if (cell) {
+            isDragging = true;
+            dragStartCell = cell;
+            // If not holding Ctrl/Cmd, clear previous selection
+            if (!e.ctrlKey && !e.metaKey) {
+                clearSelection();
+            }
+            toggleSelection(
+                parseInt(cell.dataset.age),
+                parseInt(cell.dataset.month),
+                parseInt(cell.dataset.year)
+            );
+        }
+    });
+
+    // Mouse move: Drag to select multiple
+    container.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const cell = e.target.closest('.life-month-item');
+        if (cell && !cell.classList.contains('ui-selected')) {
+            window.selectedCells.add(`${cell.dataset.age}-${cell.dataset.month}`);
+            cell.classList.add('ui-selected');
+            updateSelectionBar();
+        }
+    });
+
+    // Mouse up: End drag
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        dragStartCell = null;
+    });
+}
+
+// SELECTION LOGIC
+// SELECTION LOGIC
+// SELECTION LOGIC
+function toggleSelection(age, month, year) {
+    const key = `${age}-${month}`;
+    const cell = document.getElementById(`month-cell-${age}-${month}`);
+
+    if (window.selectedCells.has(key)) {
+        window.selectedCells.delete(key);
+        cell.classList.remove('ui-selected');
+    } else {
+        window.selectedCells.add(key);
+        cell.classList.add('ui-selected');
+    }
+
+    updateSelectionBar();
+}
+
+window.clearSelection = function () {
+    window.selectedCells.forEach(key => {
+        const [a, m] = key.split('-');
+        document.getElementById(`month-cell-${a}-${m}`)?.classList.remove('ui-selected');
+    });
+    window.selectedCells.clear();
+    updateSelectionBar();
+};
+
+function updateSelectionBar() {
+    const bar = document.getElementById('selection-bar');
+    const countSpan = document.getElementById('selection-count');
+
+    if (window.selectedCells.size > 0) {
+        bar.classList.remove('hidden');
+        countSpan.textContent = window.selectedCells.size;
+    } else {
+        bar.classList.add('hidden');
+    }
+}
+
+// BATCH EDITOR
+window.openBatchEditor = function () {
+    if (window.selectedCells.size === 0) return;
+
+    const modal = document.getElementById('life-month-modal');
+    modal.classList.remove('hidden');
+
+    // Reset form
+    document.getElementById('editor-title').textContent = `編輯已被選取的 ${window.selectedCells.size} 個月份`;
+    document.getElementById('editor-event').value = ''; // Reset event for batch
+    setEditorMood('normal'); // Default Reset
+}
+
+// Set mood in editor and update button states
+window.setEditorMood = function (mood) {
+    document.getElementById('editor-mood').value = mood;
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        if (btn.dataset.value === mood) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+};
+
+window.closeMonthEditor = function () {
+    document.getElementById('life-month-modal').classList.add('hidden');
+};
+
+// BATCH SAVE
+window.saveCurrentMonthData = async function () {
+    const mood = document.getElementById('editor-mood').value;
+    const event = document.getElementById('editor-event').value;
+
+    const lifeData = await Storage.load('life_100_data', {});
+
+    // Iterate all selected cells
+    for (let key of window.selectedCells) {
+        const [age, month] = key.split('-');
+
+        if (!lifeData[age]) lifeData[age] = {};
+        if (!lifeData[age].months) lifeData[age].months = {};
+
+        let currentData = lifeData[age].months[month] || {};
+
+        lifeData[age].months[month] = {
+            mood: mood,
+            event: event || currentData.event // Only overwrite event if new one provided
+        };
+
+        // Update UI
+        const cell = document.getElementById(`month-cell-${age}-${month}`);
+        if (cell) {
+            cell.className = `life-month-item mood-${mood} ${cell.classList.contains('is-current') ? 'is-current' : ''} ui-selected`;
+        }
+    }
+
+    await Storage.save('life_100_data', lifeData);
+
+    // Feedback
+    const btn = document.querySelector('#life-month-modal .btn-primary');
+    const originalText = btn.textContent;
+    btn.textContent = '已儲存！';
+    setTimeout(() => {
+        btn.textContent = originalText;
+        closeMonthEditor();
+        clearSelection(); // Clear selection after save
+    }, 500);
+};
+
+// ... Life calculation helpers same as before ...
+
+
 
 function calculateLife(birthDate) {
     if (!birthDate) return;
@@ -453,14 +709,19 @@ function calculateLife(birthDate) {
     document.getElementById('age-days').textContent = days.toLocaleString();
     document.getElementById('age-weeks').textContent = weeks;
 
-    // 更新人生進度條（假設平均壽命 80 歲）
+    // 更新人生進度條（假設平均壽命 100 歲 - Set to 100 for Life 100 concept）
     const ageInYears = (today - birth) / (365.25 * 24 * 60 * 60 * 1000);
-    const percent = Math.min(100, (ageInYears / 80 * 100)).toFixed(1);
+    const percent = Math.min(100, (ageInYears / 100 * 100)).toFixed(1);
     const progressBar = document.getElementById('life-progress');
     const percentDisplay = document.getElementById('life-percent');
     if (progressBar) progressBar.style.width = percent + '%';
     if (percentDisplay) percentDisplay.textContent = percent;
+
+    // Update summary text
+    document.getElementById('life-expectancy-label').textContent = '假設平均壽命 100 歲';
 }
+
+
 
 // ===== 週復盤表 =====
 async function initWeeklyReview() {
@@ -531,7 +792,7 @@ function renderWeeklyTaskRows(weekKey, tasks) {
 
         // 生成每天的 checkbox
         const checkboxCells = days.map(day =>
-            `<td class="checkbox-wrapper"><input type="checkbox" ${task[day] ? 'checked' : ''} data-week="${weekKey}" data-index="${i}" data-field="${day}" onchange="saveWeeklyTask(this)"></td>`
+            `<td><div class="checkbox-wrapper"><input type="checkbox" ${task[day] === true ? 'checked' : ''} data-week="${weekKey}" data-index="${i}" data-field="${day}" title="${day}" onchange="saveWeeklyTask(this)"></div></td>`
         ).join('');
 
         return `<tr>
@@ -571,12 +832,16 @@ window.addWeeklyTaskToWeek = async function (weekKey) {
 
 window.saveWeeklyTask = async function (el) {
     const { week, index, field } = el.dataset;
+    console.log(`Saving task: week=${week}, index=${index}, field=${field}`);
+
     const data = await Storage.load(`weekly_${week}`, { tasks: [] });
 
     if (el.type === 'checkbox') {
-        data.tasks[index][field] = el.checked;
+        data.tasks[index][field] = el.checked; // Boolean
+        console.log(`Value (Checkbox): ${el.checked}`);
     } else {
         data.tasks[index][field] = el.value;
+        console.log(`Value (Input): ${el.value}`);
     }
 
     await Storage.save(`weekly_${week}`, data);
@@ -662,3 +927,173 @@ async function renderMonthlySummary() {
 
 // 匯出功能
 window.exportData = Storage.downloadBackup.bind(Storage);
+
+// ===== 水庫評量表 - 長期 =====
+const RATING_QUESTIONS = [
+    '1個月內能順利輸入能量',
+    '1個月內感覺到能量充沛',
+    '過去1年能穩定輸入能量',
+    '過去1年經常感到能量充沛',
+    '能夠保持12小時持續輸出',
+    '輸出的能量品質穩定良好',
+    '你對他人的貢獻良多',
+    '你對他人的貢獻品質良好',
+    '他人對你的貢獻很多',
+    '他人對你的貢獻品質良好'
+];
+
+async function initReservoirRating() {
+    const data = await Storage.load('reservoir_rating', {});
+    renderRatingTable(data);
+}
+
+function renderRatingTable(data) {
+    const tbody = document.getElementById('rating-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = RATING_QUESTIONS.map((q, i) => `
+        <tr>
+            <td>${q}</td>
+            ${[1, 2, 3, 4, 5].map(score => `
+                <td>
+                    <input type="radio" name="q${i}" value="${score}" 
+                           ${data[i] == score ? 'checked' : ''} 
+                           onchange="saveRating(${i}, ${score})">
+                </td>
+            `).join('')}
+        </tr>
+    `).join('');
+
+    updateRatingSums(data);
+}
+
+window.saveRating = async function (questionIndex, score) {
+    const data = await Storage.load('reservoir_rating', {});
+    data[questionIndex] = score;
+    await Storage.save('reservoir_rating', data);
+    updateRatingSums(data);
+};
+
+function updateRatingSums(data) {
+    const sums = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
+
+    Object.values(data).forEach(score => {
+        if (score >= 1 && score <= 5) {
+            sums[score]++;
+            total += score;
+        }
+    });
+
+    [1, 2, 3, 4, 5].forEach(s => {
+        const el = document.getElementById(`sum-${s}`);
+        if (el) el.textContent = sums[s];
+    });
+
+    const totalEl = document.getElementById('total-score');
+    if (totalEl) totalEl.innerHTML = `<strong>${total}</strong> / ${RATING_QUESTIONS.length * 5}`;
+}
+
+// ===== 學習計畫 =====
+async function initLearningPlan() {
+    const data = await Storage.load('learning_plan', { rows: [] });
+    renderLearningTable(data.rows);
+}
+
+function renderLearningTable(rows) {
+    const tbody = document.getElementById('learning-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = rows.map((row, i) => `
+        <tr>
+            <td><select data-index="${i}" data-field="mindset" onchange="saveLearningRow(this)">
+                <option value="學會之前不停止" ${row.mindset === '學會之前不停止' ? 'selected' : ''}>學會之前不停止</option>
+                <option value="體驗過就好" ${row.mindset === '體驗過就好' ? 'selected' : ''}>體驗過就好</option>
+                <option value="考核！" ${row.mindset === '考核！' ? 'selected' : ''}>考核！</option>
+            </select></td>
+            <td><input type="text" value="${row.why || ''}" data-index="${i}" data-field="why" onchange="saveLearningRow(this)"></td>
+            <td><input type="text" value="${row.expected || ''}" data-index="${i}" data-field="expected" onchange="saveLearningRow(this)"></td>
+            <td><input type="text" value="${row.how || ''}" data-index="${i}" data-field="how" onchange="saveLearningRow(this)"></td>
+            <td><textarea data-index="${i}" data-field="steps" onchange="saveLearningRow(this)">${row.steps || ''}</textarea></td>
+            <td><input type="number" min="1" value="${row.times || 1}" data-index="${i}" data-field="times" onchange="saveLearningRow(this)"></td>
+            <td><input type="number" min="0" value="${row.hours || 0}" data-index="${i}" data-field="hours" onchange="saveLearningRow(this)"></td>
+            <td><input type="text" value="${row.standard || ''}" data-index="${i}" data-field="standard" onchange="saveLearningRow(this)"></td>
+            <td><input type="checkbox" ${row.done ? 'checked' : ''} data-index="${i}" data-field="done" onchange="saveLearningRow(this)"></td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteLearningRow(${i})">×</button></td>
+        </tr>
+    `).join('');
+}
+
+window.addLearningRow = async function () {
+    const data = await Storage.load('learning_plan', { rows: [] });
+    data.rows.push({
+        mindset: '學會之前不停止',
+        why: '',
+        expected: '',
+        how: '',
+        steps: '',
+        times: 1,
+        hours: 0,
+        standard: '',
+        done: false
+    });
+    await Storage.save('learning_plan', data);
+    renderLearningTable(data.rows);
+};
+
+window.saveLearningRow = async function (el) {
+    const { index, field } = el.dataset;
+    const data = await Storage.load('learning_plan', { rows: [] });
+
+    if (el.type === 'checkbox') {
+        data.rows[index][field] = el.checked;
+    } else if (el.type === 'number') {
+        data.rows[index][field] = parseInt(el.value) || 0;
+    } else {
+        data.rows[index][field] = el.value;
+    }
+
+    await Storage.save('learning_plan', data);
+};
+
+window.deleteLearningRow = async function (index) {
+    const data = await Storage.load('learning_plan', { rows: [] });
+    data.rows.splice(index, 1);
+    await Storage.save('learning_plan', data);
+    renderLearningTable(data.rows);
+};
+
+// ===== FNGA-OSM =====
+async function initFNGAOSM() {
+    const data = await Storage.load('fnga_osm', {});
+
+    // Populate all fields
+    const fields = [
+        'fn-future-state', 'fn-now-state', 'fn-future-purpose', 'fn-now-purpose',
+        'ga-original-action', 'ga-gap-reason', 'ga-new-action',
+        'gsm-goal', 'gsm-strategy', 'gsm-metrics'
+    ];
+
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && data[id]) {
+            el.value = data[id];
+        }
+    });
+}
+
+window.saveFNGA = async function () {
+    const fields = [
+        'fn-future-state', 'fn-now-state', 'fn-future-purpose', 'fn-now-purpose',
+        'ga-original-action', 'ga-gap-reason', 'ga-new-action',
+        'gsm-goal', 'gsm-strategy', 'gsm-metrics'
+    ];
+
+    const data = {};
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) data[id] = el.value;
+    });
+
+    await Storage.save('fnga_osm', data);
+};

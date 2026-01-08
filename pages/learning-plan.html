@@ -1,0 +1,50 @@
+<!-- 學習計畫 -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">學習計畫追蹤</h3>
+        <button class="btn btn-primary btn-sm" onclick="addLearningRow()">+ 新增項目</button>
+    </div>
+    <p class="text-muted mb-md">追蹤學習進度與成果</p>
+    <div class="editable-table" style="overflow-x: auto;">
+        <table class="data-table" id="learning-table">
+            <thead>
+                <tr>
+                    <th>學習心態</th>
+                    <th>為何想學習</th>
+                    <th>預期學習</th>
+                    <th>如何學習</th>
+                    <th>學習步驟</th>
+                    <th>第幾次學習</th>
+                    <th>投入時間</th>
+                    <th>學會的標準</th>
+                    <th>學會沒</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="learning-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    #learning-table input[type="text"],
+    #learning-table select {
+        width: 100%;
+        min-width: 80px;
+    }
+
+    #learning-table textarea {
+        width: 100%;
+        min-width: 120px;
+        min-height: 60px;
+        resize: vertical;
+    }
+
+    #learning-table input[type="number"] {
+        width: 60px;
+    }
+
+    #learning-table th {
+        white-space: nowrap;
+    }
+</style>

@@ -1,42 +1,57 @@
 /* ===================================
-   人生覆盤系統 - 全局樣式
+   人生覆盤系統 - Muji Minimalist Style
    =================================== */
 
 /* CSS Variables */
 :root {
-  /* Colors */
-  --bg-primary: #0f0f1a;
-  --bg-secondary: #1a1a2e;
-  --bg-card: rgba(30, 30, 50, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.05);
+  /* Colors - Muji Palette */
+  --bg-primary: #f5f5f5;
+  /* Light Gray Background (Matte) */
+  --bg-secondary: #e8e8e8;
+  /* Slightly darker gray for contrast */
+  --bg-card: #ffffff;
+  /* Pure white cards */
+  --bg-glass: rgba(0, 0, 0, 0.03);
+  /* Very subtle interaction layer */
+  --bg-hover: rgba(0, 0, 0, 0.05);
 
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0b0;
-  --text-muted: #6b6b7b;
+  --text-primary: #333333;
+  /* Soft Black */
+  --text-secondary: #666666;
+  /* Dark Gray */
+  --text-muted: #999999;
+  /* Light Gray Text */
 
-  --accent-cyan: #00d9ff;
-  --accent-pink: #ff6b9d;
-  --accent-green: #4ecdc4;
-  --accent-orange: #ffa726;
-  --accent-red: #ff6b6b;
-  --accent-yellow: #ffeb3b;
+  /* Muji/Japanese Minimalist Accents */
+  --accent-cyan: #555555;
+  /* Replaced with dark gray for primary actions */
+  --accent-pink: #7F0019;
+  /* Muji Red (Traditional Maroon) */
+  --accent-green: #5c7c66;
+  /* Muted Tea Green */
+  --accent-orange: #d48858;
+  /* Muted Orange */
+  --accent-red: #bf4545;
+  /* Muted Red */
+  --accent-yellow: #d4b558;
+  /* Muted Yellow */
 
-  /* Heatmap Colors */
-  --heat-1: #ff4444;
-  --heat-2: #ff8844;
-  --heat-3: #ffcc44;
-  --heat-4: #aadd44;
-  --heat-5: #44dd44;
+  /* Heatmap Colors (Muted) */
+  --heat-1: #e0e0e0;
+  --heat-2: #c4c4c4;
+  --heat-3: #a8a8a8;
+  --heat-4: #8c8c8c;
+  --heat-5: #606060;
 
   /* Borders */
-  --border-color: rgba(255, 255, 255, 0.1);
-  --border-glass: rgba(255, 255, 255, 0.15);
+  --border-color: #e0e0e0;
+  --border-glass: #e0e0e0;
 
-  /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(0, 217, 255, 0.3);
+  /* Shadows - Minimal/Flat */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05);
+  --shadow-glow: none;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -48,9 +63,10 @@
 
   /* Border Radius */
   --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-md: 4px;
+  /* Squarer corners for Muji look */
+  --radius-lg: 4px;
+  --radius-xl: 4px;
 
   /* Transitions */
   --transition-fast: 0.15s ease;
@@ -58,7 +74,7 @@
   --transition-slow: 0.5s ease;
 
   /* Typography */
-  --font-sans: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
@@ -85,20 +101,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Background Gradient */
+/* Background Gradient - REMOVED for Muji Style */
 body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(0, 217, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(255, 107, 157, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(78, 205, 196, 0.05) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: -1;
+  display: none;
 }
 
 /* Typography */
@@ -142,10 +147,10 @@ a:hover {
 
 /* Sidebar Navigation */
 .sidebar {
-  width: 280px;
+  width: 250px;
   background: var(--bg-card);
   border-right: 1px solid var(--border-color);
-  backdrop-filter: blur(20px);
+  /* No backdrop filter needed for solid bg */
   padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
@@ -164,10 +169,9 @@ a:hover {
 .sidebar-logo {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
+  /* Solid black */
+  letter-spacing: -0.5px;
 }
 
 .sidebar-subtitle {
@@ -215,9 +219,10 @@ a:hover {
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(78, 205, 196, 0.1));
-  color: var(--accent-cyan);
-  border: 1px solid rgba(0, 217, 255, 0.3);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
 }
 
 .nav-icon {
@@ -255,9 +260,10 @@ a:hover {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(20px);
+  /* No backdrop filter */
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -318,20 +324,20 @@ a:hover {
 .data-table th:first-child {
   position: sticky;
   left: 0;
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
+  /* Match table header/body bg */
   z-index: 5;
-  border-right: 2px solid var(--border-color);
-  /* Highlight fixed column */
+  border-right: 1px solid var(--border-color);
 }
 
 .data-table td:first-child {
-  font-weight: bold;
+  font-weight: 600;
   text-align: center;
-  color: var(--accent-cyan);
+  color: var(--text-primary);
 }
 
 .data-table tr:hover td {
-  background: rgba(0, 217, 255, 0.05);
+  background: var(--bg-secondary);
 }
 
 /* Ensure sticky column keeps its background on hover */
@@ -458,12 +464,13 @@ a:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-  color: var(--bg-primary);
+  background: var(--text-primary);
+  /* Solid Black */
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  box-shadow: var(--shadow-glow);
+  background: #555555;
   transform: translateY(-1px);
 }
 

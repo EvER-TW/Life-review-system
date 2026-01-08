@@ -6,47 +6,26 @@ const ALLOWED_EMAILS = ['littletiger025@gmail.com'];
 
 let currentUser = null;
 
-// 檢查登入狀態
+// 檢查登入狀態 (已停用: 本地模式不需登入)
 function checkLoginStatus() {
-    const savedUser = sessionStorage.getItem('user');
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            showApp();
-            return true;
-        } catch (e) {
-            sessionStorage.removeItem('user');
-        }
-    }
-    showLogin();
-    return false;
-}
-
-// Google 登入回調
-function handleCredentialResponse(response) {
-    const payload = parseJwt(response.credential);
-
-    if (!ALLOWED_EMAILS.includes(payload.email)) {
-        document.getElementById('login-error').textContent =
-            `此帳號 (${payload.email}) 無權限存取`;
-        return;
-    }
-
+    // 模擬已登入使用者
     currentUser = {
-        email: payload.email,
-        name: payload.name,
-        picture: payload.picture
+        email: 'local@user',
+        name: 'Local User',
+        picture: ''
     };
-
-    sessionStorage.setItem('user', JSON.stringify(currentUser));
     showApp();
+    return true;
 }
 
-// 登出
+// Google 登入回調 (已停用)
+function handleCredentialResponse(response) {
+    console.log('Google login disabled in local mode');
+}
+
+// 登出 (已停用)
 function handleLogout() {
-    sessionStorage.removeItem('user');
-    currentUser = null;
-    showLogin();
+    console.log('Logout disabled in local mode');
 }
 
 // 顯示登入頁

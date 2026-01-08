@@ -1,0 +1,116 @@
+<!-- FNGA-OSM 目標規劃 -->
+<div class="card mb-md">
+    <h3 class="card-title mb-md">FNGA-OSM 目標規劃</h3>
+    <p class="text-muted mb-md">FN = Future & Now (未來與現在) | GA = Gap & Action (差距與行動) | GSM = Goal, Strategy, Metrics
+        (目標、策略、指標)</p>
+</div>
+
+<!-- FN Section -->
+<div class="card mb-md">
+    <div class="section-header">
+        <strong>FN（未來與現在）</strong>
+    </div>
+    <div class="grid-2">
+        <div class="form-group">
+            <label class="form-label label-header">期望的狀態</label>
+            <textarea class="form-input" id="fn-future-state" rows="4" placeholder="描述你期望達到的理想狀態..."
+                onchange="saveFNGA()"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label label-header">現在的狀態</label>
+            <textarea class="form-input" id="fn-now-state" rows="4" placeholder="描述你目前的狀態..."
+                onchange="saveFNGA()"></textarea>
+        </div>
+    </div>
+    <div class="grid-2 mt-md">
+        <div class="form-group">
+            <label class="form-label label-header">期望的目的</label>
+            <textarea class="form-input" id="fn-future-purpose" rows="4" placeholder="為什麼想達到這個狀態..."
+                onchange="saveFNGA()"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label label-header">現在的目的</label>
+            <textarea class="form-input" id="fn-now-purpose" rows="4" placeholder="目前為何這樣做..."
+                onchange="saveFNGA()"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- GA Section -->
+<div class="card mb-md">
+    <div class="section-header">
+        <strong>GA（差距與行動）</strong>
+    </div>
+    <table class="data-table mt-sm">
+        <thead>
+            <tr>
+                <th>原先的行動</th>
+                <th>產生差距的原因</th>
+                <th>新增的行動</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><textarea class="form-input" id="ga-original-action" rows="6" placeholder="原本採取的行動..."
+                        onchange="saveFNGA()"></textarea></td>
+                <td><textarea class="form-input" id="ga-gap-reason" rows="6" placeholder="為何產生差距..."
+                        onchange="saveFNGA()"></textarea></td>
+                <td><textarea class="form-input" id="ga-new-action" rows="6" placeholder="接下來要採取的行動..."
+                        onchange="saveFNGA()"></textarea></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- GSM Section -->
+<div class="card">
+    <div class="section-header">
+        <strong>GSM（具體行動目標/策略/可量測指標）</strong>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>行動目標</th>
+                <th>策略</th>
+                <th>可量測指標</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><textarea class="form-input" id="gsm-goal" rows="8" placeholder="具體要達成什麼..."
+                        onchange="saveFNGA()"></textarea></td>
+                <td><textarea class="form-input" id="gsm-strategy" rows="8" placeholder="用什麼方法達成..."
+                        onchange="saveFNGA()"></textarea></td>
+                <td><textarea class="form-input" id="gsm-metrics" rows="8" placeholder="如何衡量成功..."
+                        onchange="saveFNGA()"></textarea></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .section-header {
+        background: #333;
+        color: white;
+        padding: 10px 16px;
+        margin: -16px -16px 16px;
+        border-radius: 8px 8px 0 0;
+        font-size: 15px;
+    }
+
+    .label-header {
+        background: #f5f5f5;
+        color: #333;
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    textarea.form-input {
+        width: 100%;
+        resize: vertical;
+    }
+</style>

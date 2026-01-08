@@ -3,25 +3,12 @@
  */
 
 const Storage = {
-  // API Base URL (relative to where frontend is hosted, which is same origin)
-  API_URL: '/api/storage',
-
   /**
-   * 儲存資料 (Async)
+   * 儲存資料 (Sync with localStorage)
    */
   async save(key, data) {
     try {
-      const response = await fetch(`${this.API_URL}/${key}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      localStorage.setItem(key, JSON.stringify(data));
       return true;
     } catch (e) {
       console.error('Storage save error:', e);
@@ -30,18 +17,13 @@ const Storage = {
   },
 
   /**
-   * 讀取資料 (Async)
+   * 讀取資料 (Sync with localStorage)
    */
   async load(key, defaultValue = null) {
     try {
-      const response = await fetch(`${this.API_URL}/${key}`);
-      if (!response.ok) {
-        // If 404 or other error, return default
-        return defaultValue;
-      }
-      const json = await response.json();
-      // Backend returns { data: ... } or { data: null }
-      return json.data !== undefined && json.data !== null ? json.data : defaultValue;
+      const item = localStorage.getItem(key);
+      if (item === null) return defaultValue;
+      return JSON.parse(item);
     } catch (e) {
       console.error('Storage load error:', e);
       return defaultValue;
@@ -49,18 +31,31 @@ const Storage = {
   },
 
   /**
-   * 刪除資料 (暫不實作 Delete API，僅保留介面)
+   * 刪除資料
    */
   async remove(key) {
-    console.warn('Delete not implemented for Cloud Storage yet');
+    localStorage.removeItem(key);
   },
 
   /**
-   * 匯出資料 (下載備份) - 改為呼叫後端 endpoints 或 frontend 組合
-   * Cloud version: This might be complex. For now, disable or simplify.
+   * 匯出資料 (下載備份)
    */
   async downloadBackup() {
-    alert('雲端版暫不支援一鍵全備份下載，資料已儲存於 Google Sheets。');
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      data[key] = JSON.parse(localStorage.getItem(key));
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `life-review-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 };
 

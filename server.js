@@ -42,6 +42,11 @@ app.post('/api/storage/:key', async (req, res) => {
     }
 });
 
+// Prevent recursive index.html loading for missing pages
+app.get('/pages/*', (req, res) => {
+    res.status(404).send('Page not found');
+});
+
 // Serve index.html for unknown routes (SPA fallback)
 app.get('*', (req, res) => {
     if (req.accepts('html')) {

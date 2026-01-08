@@ -1,4 +1,8 @@
 <!-- 活多久計算機 -->
+<div class="card" style="margin-bottom: var(--spacing-md); background: var(--bg-secondary); border: none;">
+    <p class="text-muted text-center" style="margin: 0;">💡 時間是最寶貴的資源，好好珍惜每一天。</p>
+</div>
+
 <div class="stat-grid">
     <div class="stat-card">
         <div class="stat-value" id="age-years">--</div>
@@ -29,25 +33,395 @@
 
 <div class="card">
     <h3 class="card-title mb-md">人生進度條</h3>
-    <p class="text-muted mb-md">假設平均壽命 80 歲</p>
+    <p class="text-muted mb-md" id="life-expectancy-label">假設平均壽命 100 歲</p>
     <div class="progress-bar" style="height: 24px;">
         <div class="progress-fill" id="life-progress" style="width: 0%;"></div>
     </div>
     <p class="text-center mt-md"><span id="life-percent">--</span>% 的人生已過</p>
 </div>
 
+<!-- Life 100 Grid - UNIFIED TABLE -->
 <div class="card">
-    <p class="text-muted text-center">💡 時間是最寶貴的資源，好好珍惜每一天。</p>
+    <h3 class="card-title mb-md">人生 100 全覽 (月度)</h3>
+    <p class="text-muted mb-md">每一列代表一年 (12個月)，點擊格子編輯該月份心情。</p>
+    <div id="life-100-grid">
+        <p class="text-muted text-center">請先輸入出生年月日以產生全覽圖。</p>
+    </div>
 </div>
 
-<script>
-    // 更新人生進度條
-    document.getElementById('birth-date')?.addEventListener('change', function () {
-        const birthDate = new Date(this.value);
-        const today = new Date();
-        const ageInYears = (today - birthDate) / (365.25 * 24 * 60 * 60 * 1000);
-        const percent = Math.min(100, (ageInYears / 80 * 100)).toFixed(1);
-        document.getElementById('life-progress').style.width = percent + '%';
-        document.getElementById('life-percent').textContent = percent;
-    });
-</script>
+<!-- ===== MODAL EDITOR (Popup) ===== -->
+<div id="life-month-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="editor-title">編輯月份</h3>
+            <button class="modal-close" onclick="closeMonthEditor()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">當月心情</label>
+                <div class="mood-selector">
+                    <button class="btn btn-outline mood-btn" data-value="normal" onclick="setEditorMood('normal')">
+                        <span class="mood-icon">⚪</span>
+                        <span>平淡</span>
+                    </button>
+                    <button class="btn btn-outline mood-btn" data-value="positive" onclick="setEditorMood('positive')">
+                        <span class="mood-icon">🟢</span>
+                        <span>正面</span>
+                    </button>
+                    <button class="btn btn-outline mood-btn" data-value="negative" onclick="setEditorMood('negative')">
+                        <span class="mood-icon">🔵</span>
+                        <span>負面</span>
+                    </button>
+                </div>
+                <input type="hidden" id="editor-mood">
+            </div>
+            <div class="form-group">
+                <label class="form-label">重點記事</label>
+                <input type="text" class="form-input" id="editor-event" placeholder="這個月發生了什麼...">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <input type="hidden" id="editor-age">
+            <input type="hidden" id="editor-month">
+            <button class="btn btn-secondary" onclick="closeMonthEditor()">取消</button>
+            <button class="btn btn-primary" onclick="saveCurrentMonthData()">儲存</button>
+        </div>
+    </div>
+</div>
+<!-- ===== FLOATING SELECTION BAR ===== -->
+<div id="selection-bar" class="selection-bar hidden">
+    <div class="selection-info">
+        <span id="selection-count">0</span> 個月份已選取
+    </div>
+    <div class="selection-actions">
+        <button class="btn btn-outline btn-sm" onclick="clearSelection()">取消</button>
+        <button class="btn btn-primary btn-sm" onclick="openBatchEditor()">編輯</button>
+    </div>
+</div>
+
+<style>
+    /* ===== FLOATING SELECTION BAR ===== */
+    .selection-bar {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 2000;
+        transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .selection-bar.hidden {
+        transform: translate(-50%, 100px);
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .selection-info {
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .selection-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .selection-bar .btn-sm {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .selection-bar .btn-outline {
+        background: transparent;
+        border: 1px solid white;
+        color: white;
+    }
+
+    .selection-bar .btn-primary {
+        background: white;
+        color: #333;
+        border: none;
+    }
+
+    /* ===== SELECTED CELL STYLE ===== */
+    .life-month-item.ui-selected {
+        border: 3px solid #333 !important;
+        box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+        transform: scale(0.95);
+    }
+
+    /* ===== Life 100 Monthly Grid - UNIFIED TABLE ===== */
+    #life-100-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .life-year-row {
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .life-year-row:last-child {
+        border-bottom: none;
+    }
+
+    .life-year-header {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .life-year-label {
+        font-size: 16px;
+        font-weight: bold;
+        color: var(--text-primary);
+    }
+
+    .life-year-sub {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .life-months-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .life-month-item {
+        aspect-ratio: 1;
+        min-height: 48px;
+        background-color: #f5f5f5;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: bold;
+        color: #999;
+        transition: transform 0.15s, box-shadow 0.15s;
+        user-select: none;
+        /* Prevent text selection during drag */
+        padding: 4px;
+        text-align: center;
+        overflow: hidden;
+    }
+
+    .cell-month {
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .cell-event {
+        font-size: 9px;
+        font-weight: normal;
+        color: #666;
+        margin-top: 2px;
+        line-height: 1.2;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .life-month-item:hover,
+    .life-month-item:active {
+        transform: scale(1.05);
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-color: #999;
+    }
+
+    .life-month-item.selected {
+        border-color: var(--text-primary);
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mood Colors */
+    .life-month-item.mood-normal {
+        background-color: #f5f5f5;
+        color: #999;
+    }
+
+    .life-month-item.mood-positive {
+        background-color: #c8e6c9;
+        border-color: #81c784;
+        color: #2e7d32;
+    }
+
+    .life-month-item.mood-positive .cell-event {
+        color: #2e7d32;
+    }
+
+    .life-month-item.mood-negative {
+        background-color: #bbdefb;
+        border-color: #64b5f6;
+        color: #1565c0;
+    }
+
+    .life-month-item.mood-negative .cell-event {
+        color: #1565c0;
+    }
+
+    .life-month-item.is-current {
+        border-color: #333;
+        box-shadow: inset 0 0 0 2px #333;
+    }
+
+    /* Responsive Grid */
+    @media (min-width: 600px) {
+        .life-months-container {
+            grid-template-columns: repeat(6, 1fr);
+        }
+    }
+
+    @media (min-width: 900px) {
+        .life-months-container {
+            grid-template-columns: repeat(12, 1fr);
+        }
+
+        .life-month-item {
+            min-height: 36px;
+        }
+
+        .cell-event {
+            font-size: 8px;
+        }
+    }
+
+    /* ===== MODAL STYLES ===== */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+    }
+
+    .modal-overlay.hidden {
+        display: none;
+    }
+
+    .modal-content {
+        background: #fff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.2s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        color: #999;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .modal-close:hover {
+        color: #333;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 12px;
+        padding: 16px 20px;
+        border-top: 1px solid #eee;
+        justify-content: flex-end;
+    }
+
+    /* Mood Selector in Modal */
+    .mood-selector {
+        display: flex;
+        gap: 10px;
+    }
+
+    .mood-btn {
+        flex: 1;
+        padding: 16px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+
+    .mood-icon {
+        font-size: 24px;
+    }
+
+    .mood-btn.active[data-value="normal"] {
+        background: #e0e0e0;
+        border-color: #999;
+    }
+
+    .mood-btn.active[data-value="positive"] {
+        background: #c8e6c9;
+        border-color: #2e7d32;
+        color: #1b5e20;
+    }
+
+    .mood-btn.active[data-value="negative"] {
+        background: #bbdefb;
+        border-color: #1565c0;
+        color: #0d47a1;
+    }
+
+    .btn-secondary {
+        background: #f5f5f5;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+</style>
